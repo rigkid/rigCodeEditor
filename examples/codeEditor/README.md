@@ -1,6 +1,6 @@
 # codeEditor hero
 
-Exercises **rigCodeEditor**: TextEditorPanel chrome (menus, find/replace, sidebar),
+Exercises **rigCodeEditor**: TextEditorPanel chrome (menus, find/replace, tabs),
 JetBrains Mono, and a seeded Python sample.
 
 ```bash

@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "author": "Rigkid",
   "license": "MIT Rigkid Contributors",
-  "description": "ImGui code editor — TextEditorPanel chrome",
+  "description": "ImGui code editor — TextEditorPanel chrome + JetBrains Mono",
   "dependencies": [
     {
       "name": "rigImGui",

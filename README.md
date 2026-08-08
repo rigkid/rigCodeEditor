@@ -4,16 +4,15 @@
 ![preview](examples/codeEditor/img/preview.png)
 
 
-Shared **ImGui code editor** for RigKit tool apps.
+Shared **ImGui code editor** for RigKit tool apps — `*Editor` over [rigComponent](https://github.com/rigkid/rigComponent) `CCode` (same family as rigNodeEditor).
 
-Pack role: `*Editor` capability over app-owned text (same family as rigNodeEditor). Buffer
-lives on the panel / window API (`getText` / `setText`) until a product needs `.rig`
-serialization — then promote a POD later.
+Every `CCode` entity becomes a Sublime-style tab; edits write back to the component. Apps can also seed the window with `getText` / `setText` (the hero does). Depends on **rigImGui** (`IMui` / `MWindow` / file dialogs / font atlas hooks).
 
 ## Features
 
 - **TextEditor** (ImGuiColorTextEdit) + language definitions
-- Full panel chrome: File / Edit / View menus, find & replace (regex), open-files sidebar
+- Panel chrome: File / Edit / View menus, find & replace (regex), open-file tabs
+- Mirrors `CCode` buffers (+ optional `CAssetRef` path) and Properties light-edit
 - **JetBrains Mono** Regular via `IMui::registerFontAtlasHook`
 - Host dialogs through `IMui` (`std::vector<std::string>` extension filters)
 
@@ -30,13 +29,13 @@ ed->setText(src, TextEditor::LanguageDefinitionId::Python);
 ed->panel().showFind(true);
 ```
 
-Depends on **rigImGui** (`IMui` / `MWindow` / file dialogs / font atlas hooks).
-
 ## Example
 
+[examples/codeEditor](examples/codeEditor/) — dockable Code Editor with JetBrains Mono and a seeded Python sample.
+
 ```bash
-cmake -S /examples/codeEditor -B /examples/codeEditor/build
-cmake --build /examples/codeEditor/build
+cmake -S examples/codeEditor -B examples/codeEditor/build
+cmake --build examples/codeEditor/build --target codeEditor
 ```
 
 ## Pi note

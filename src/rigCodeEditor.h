@@ -15,10 +15,9 @@ class MEcs;
 
 /**
  * @brief Shared ImGui code-editor pack for tool apps.
- * @details Registers a Code Editor window via IMui / MWindow. Apps
- * (PaintPlotter, CAD, shader tools) read/write text through CodeEditorWindow.
- * Vendors ImGuiColorTextEdit under third_party/. Buffer stays on the panel /
- * window API until a product needs .rig serialization.
+ * @details Registers a Code Editor window via IMui / MWindow. Mirrors every
+ * `CCode` entity into tabs (edits write back); apps may also seed the window
+ * with getText / setText. Vendors ImGuiColorTextEdit under third_party/.
  */
 class rigCodeEditor : public IPack {
   public:
