@@ -1,0 +1,3 @@
+ImGuiColorTextEdit (TextEditor.cpp / TextEditor.h)
+Upstream: https://github.com/BalazsJako/ImGuiColorTextEdit (MIT)
+Vendored under third_party/ImGuiColorTextEdit for rigCodeEditor.

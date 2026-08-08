@@ -1,0 +1,26 @@
+{
+  "name": "rigCodeEditor",
+  "url": "https://github.com/rigkid/rigCodeEditor.git",
+  "ref": "main",
+  "version": "0.1.0",
+  "author": "Rigkid",
+  "license": "MIT Rigkid Contributors",
+  "description": "ImGui code editor — TextEditorPanel chrome",
+  "dependencies": [
+    {
+      "name": "rigImGui",
+      "url": "https://github.com/rigkid/rigImGui.git",
+      "ref": "main"
+    },
+    {
+      "name": "rigComponent",
+      "url": "https://github.com/rigkid/rigComponent.git",
+      "ref": "main"
+    }
+  ],
+  "include_paths": [
+    "src",
+    "third_party/ImGuiColorTextEdit",
+    "third_party/fonts"
+  ]
+}
