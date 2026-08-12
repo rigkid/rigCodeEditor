@@ -54,11 +54,7 @@ TextEditor::LanguageDefinitionId languageFromId(const std::string& id) {
 
 rigCodeEditor::rigCodeEditor() : rigCodeEditor(Options{}) {}
 
-rigCodeEditor::rigCodeEditor(Options opts) : IPack("rigCodeEditor"), m_opts(opts) {
-	setDescription("ImGui code editor (TextEditorPanel + JetBrains Mono)");
-	addDependency("rigImGui");
-	addDependency("rigComponent"); // CCode buffers listed as editor tabs.
-}
+rigCodeEditor::rigCodeEditor(Options opts) : IPack("rigCodeEditor"), m_opts(opts) {}
 
 bool rigCodeEditor::init() {
 	spdlog::info("[rigCodeEditor] init");
