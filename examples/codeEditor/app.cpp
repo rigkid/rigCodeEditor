@@ -1,5 +1,7 @@
 #include "app.h"
 
+#include <spdlog/spdlog.h>
+
 #include "CodeEditorWindow.h"
 #include "core/RigKitEngine.h"
 #include "core/pack/MPack.h"
