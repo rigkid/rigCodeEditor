@@ -203,6 +203,8 @@ void TextEditorPanel::detectLanguage(const std::string& path) {
 		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Gcode);
 	else if (ext == "md" || ext == "markdown")
 		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Markdown);
+	else if (ext == "fea")
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Fea);
 	else
 		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::None);
 }
@@ -393,7 +395,9 @@ void TextEditorPanel::drawContents() {
 			return {".sql", ".*"};
 		if (lang == TextEditor::LanguageDefinitionId::Markdown)
 			return {".md", ".markdown", ".*"};
-		return {".cpp", ".h", ".hpp", ".c", ".py", ".glsl", ".gcode", ".json", ".txt", ".*"};
+		if (lang == TextEditor::LanguageDefinitionId::Fea)
+			return {".fea", ".*"};
+		return {".cpp", ".h", ".hpp", ".c", ".py", ".glsl", ".gcode", ".fea", ".json", ".txt", ".*"};
 	};
 
 	auto doOpen = [&] {
@@ -401,7 +405,7 @@ void TextEditorPanel::drawContents() {
 			return;
 		m_openFile("Open File",
 				   {".cpp", ".h", ".hpp", ".c", ".cs", ".py", ".lua", ".glsl", ".vert", ".frag",
-					".gcode", ".nc", ".json", ".xml", ".svg", ".txt", ".md", ".*"},
+					".gcode", ".nc", ".fea", ".json", ".xml", ".svg", ".txt", ".md", ".*"},
 				   [this](const std::string& path) { openPath(path); });
 	};
 
@@ -520,6 +524,7 @@ void TextEditorPanel::drawContents() {
 					{"HLSL", TextEditor::LanguageDefinitionId::Hlsl},
 					{"G-code", TextEditor::LanguageDefinitionId::Gcode},
 					{"Markdown", TextEditor::LanguageDefinitionId::Markdown},
+					{"FEA", TextEditor::LanguageDefinitionId::Fea},
 				};
 				auto curLang = m_editor.GetLanguageDefinition();
 				for (auto& l : kLangs)

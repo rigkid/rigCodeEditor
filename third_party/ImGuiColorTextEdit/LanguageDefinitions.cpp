@@ -1241,3 +1241,65 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Markdown()
 	}
 	return langDef;
 }
+
+const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Fea()
+{
+	static bool inited = false;
+	static LanguageDefinition langDef;
+	if (!inited)
+	{
+		// AFDKO feature file (Adobe OpenType Feature File Syntax).
+		static const char* const keywords[] = {
+			"languagesystem", "table", "lookup", "lookupflag", "feature", "subtable",
+			"script", "language", "include",
+			"substitute", "sub", "reversesub", "rsub",
+			"ignore", "enumerate", "enum",
+			"position", "pos",
+			"anchorDef", "valueRecordDef", "contourpoint", "device", "anchor",
+			"markClass", "parameters", "featureNames", "cvParameters",
+			"nameid", "sizemenuname",
+			"from", "by", "except", "useExtension",
+			"anonymous", "anon",
+			"exclude_dflt", "include_dflt", "required",
+			"RightToLeft", "IgnoreBaseGlyphs", "IgnoreLigatures", "IgnoreMarks",
+			"UseMarkFilteringSet", "MarkAttachmentType",
+			"NULL", "named",
+			"cursive", "mark", "mkmk", "base", "ligature", "component",
+		};
+		for (auto& k : keywords)
+			langDef.mKeywords.insert(k);
+
+		static const char* const identifiers[] = {
+			"liga", "clig", "dlig", "hlig", "rlig",
+			"kern", "mark", "mkmk", "curs",
+			"calt", "ccmp", "locl",
+			"smcp", "c2sc", "onum", "lnum", "tnum", "pnum",
+			"ss01", "ss02", "ss03",
+		};
+		for (auto& k : identifiers)
+		{
+			Identifier id;
+			id.mDeclaration = "OpenType feature tag";
+			langDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
+		}
+
+		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(
+			R"##(\"(\\.|[^\"])*\")##", PaletteIndex::String));
+		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(
+			R"##(@[A-Za-z_][A-Za-z0-9_.\-]*)##", PaletteIndex::Preprocessor));
+		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(
+			R"##([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+))##", PaletteIndex::Number));
+		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(
+			R"##(\\?[A-Za-z_][A-Za-z0-9_.\-]*)##", PaletteIndex::Identifier));
+		langDef.mTokenRegexStrings.push_back(std::make_pair<std::string, PaletteIndex>(
+			R"##([\[\]\{\}\(\)\-\+\=\<\>\;\,\'])##", PaletteIndex::Punctuation));
+
+		langDef.mSingleLineComment = "#";
+		langDef.mPreprocChar = '\0';
+		langDef.mCaseSensitive = true;
+		langDef.mName = "FEA";
+
+		inited = true;
+	}
+	return langDef;
+}

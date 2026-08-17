@@ -47,6 +47,8 @@ TextEditor::LanguageDefinitionId languageFromId(const std::string& id) {
 		return Lang::Hlsl;
 	if (id == "markdown" || id == "md")
 		return Lang::Markdown;
+	if (id == "fea")
+		return Lang::Fea;
 	return Lang::None;
 }
 
