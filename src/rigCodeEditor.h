@@ -37,6 +37,14 @@ class rigCodeEditor : public IPack {
 	const Options& options() const { return m_opts; }
 	ImFont* editorFont() const { return m_font; }
 
+	/**
+	 * @brief Highlighted inline TextEditor for a `CCode` buffer.
+	 * @details Shared by Properties and kit panels (e.g. Snippets). Same slots —
+	 * edits stay in sync when both are visible.
+	 */
+	bool drawLightEdit(uint32_t entity, std::string& text, const std::string& language,
+					   float height, bool readOnly);
+
   private:
 	struct PropLightEditor {
 		TextEditor editor;
@@ -46,9 +54,6 @@ class rigCodeEditor : public IPack {
 
 	/** @brief Mirror every `CCode` entity into the editor tabs. */
 	void syncCodeBuffers(MEcs& ecs);
-	/** @brief Properties Edit collapsing header — highlighted TextEditor. */
-	bool drawPropertiesLightEdit(uint32_t entity, std::string& text, const std::string& language,
-								 float height, bool readOnly);
 	void wirePropertiesHooks();
 
 	Options m_opts;

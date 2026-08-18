@@ -94,7 +94,7 @@ void rigCodeEditor::setup() {
 	wirePropertiesHooks();
 
 	if (!m_opts.registerWindow) {
-		spdlog::info("[rigCodeEditor] registerWindow=false — Properties light edit only");
+		spdlog::info("[rigCodeEditor] registerWindow=false — inline light edit only");
 		return;
 	}
 
@@ -161,13 +161,12 @@ void rigCodeEditor::wirePropertiesHooks() {
 
 	props->setCodeLightEditDraw([this](uint32_t entity, std::string& text,
 									   const std::string& language, float height, bool readOnly) {
-		return drawPropertiesLightEdit(entity, text, language, height, readOnly);
+		return drawLightEdit(entity, text, language, height, readOnly);
 	});
 }
 
-bool rigCodeEditor::drawPropertiesLightEdit(uint32_t entity, std::string& text,
-											const std::string& language, float height,
-											bool readOnly) {
+bool rigCodeEditor::drawLightEdit(uint32_t entity, std::string& text, const std::string& language,
+								  float height, bool readOnly) {
 	auto& slot = m_propEditors[entity];
 	if (slot.language != language || !slot.seeded) {
 		slot.editor.SetLanguageDefinition(languageFromId(language));
