@@ -1,19 +1,19 @@
 #include "app.h"
 
-#include <spdlog/spdlog.h>
-
-#include "CodeEditorWindow.h"
-#include "core/RigKitEngine.h"
 #include "core/pack/MPack.h"
+#include "core/RigKitEngine.h"
 #include "packs/rigCodeEditor/src/rigCodeEditor.h"
 #include "packs/rigComponent/src/rigComponent.h"
 #include "packs/rigImGui/src/rigImGui.h"
 #include "packs/rigSystems/src/rigSystems.h"
+#include "CodeEditorWindow.h"
+
+#include <spdlog/spdlog.h>
 
 namespace {
 
 constexpr const char* kSamplePython = R"py(
-# rigCodeEditor hero — JetBrains Mono + panel chrome
+# rigCodeEditor hero - JetBrains Mono + panel chrome
 # Try: File Open/Save, Edit Find, View Language / Show Whitespace
 
 def greet(name: str) -> str:
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 } // namespace
 
 void CodeEditorApp::setup() {
-	spdlog::info("codeEditor — TextEditorPanel + JetBrains Mono");
+	spdlog::info("codeEditor - TextEditorPanel + JetBrains Mono");
 	m_engine->setClearColor(0.10f, 0.11f, 0.14f, 1.0f);
 
 	auto* packs = m_engine->getPackManager();

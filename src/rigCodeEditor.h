@@ -3,8 +3,9 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
-#include "TextEditor.h"
+
 #include "core/pack/IPack.h"
+#include "TextEditor.h"
 
 struct ImFont;
 
@@ -21,7 +22,7 @@ class MEcs;
  */
 class rigCodeEditor : public IPack {
   public:
-	/** @brief Bootstrap — register window, visibility, editor font size. */
+	/** @brief Bootstrap - register window, visibility, editor font size. */
 	struct Options {
 		bool registerWindow = true;
 		bool windowVisible = true; ///< Hero default; hide then show when the app needs it.
@@ -39,7 +40,7 @@ class rigCodeEditor : public IPack {
 
 	/**
 	 * @brief Highlighted inline TextEditor for a `CCode` buffer.
-	 * @details Shared by Properties and kit panels (e.g. Snippets). Same slots —
+	 * @details Shared by Properties and kit panels (e.g. Snippets). Same slots  - 
 	 * edits stay in sync when both are visible.
 	 */
 	bool drawLightEdit(uint32_t entity, std::string& text, const std::string& language,

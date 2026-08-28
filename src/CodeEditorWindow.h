@@ -1,13 +1,14 @@
 #pragma once
 
 #include <string>
+
 #include "IWindow.h"
 #include "TextEditorPanel.h"
 
 namespace rigkit {
 
 /**
- * @brief Dockable Code Editor — TextEditorPanel chrome + JetBrains Mono.
+ * @brief Dockable Code Editor - TextEditorPanel chrome + JetBrains Mono.
  * @details Begun with ImGuiWindowFlags_MenuBar; panel owns File/Edit/View,
  * find/replace, open-file tabs, and IMui dialog callbacks.
  */

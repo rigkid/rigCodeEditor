@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
+#include "imgui.h"
 #include "TextEditor.h"
 #include "TextEditorFindReplace.h"
-#include "imgui.h"
 
 namespace rigkit {
 
@@ -26,7 +26,7 @@ class TextEditorPanel {
 
 	void setup();
 
-	/// Host open/save (IMui FileDialogs — extension filters like ".py", ".*").
+	/// Host open/save (IMui FileDialogs - extension filters like ".py", ".*").
 	void setDialogCallbacks(
 		std::function<void(const std::string& title, std::vector<std::string> filters,
 						   ConfirmPath onConfirm)>
@@ -35,7 +35,7 @@ class TextEditorPanel {
 						   ConfirmPath onConfirm)>
 			saveFile);
 
-	/** @brief Menu bar + tabs + editor + status — call inside an open ImGui window. */
+	/** @brief Menu bar + tabs + editor + status - call inside an open ImGui window. */
 	void drawContents();
 
 	void setText(const std::string& text,
@@ -48,7 +48,7 @@ class TextEditorPanel {
 		std::function<void()> onClick;
 	};
 	/**
-	 * @brief One host-supplied source tab — a file or a live buffer.
+	 * @brief One host-supplied source tab - a file or a live buffer.
 	 * @details Set `read` to back the entry with memory instead of disk; `write`
 	 * then receives every edit, making the host's buffer the source of truth.
 	 * Without `write` the entry loads read-only.
@@ -90,8 +90,8 @@ class TextEditorPanel {
 	void setToolbarDraw(std::function<void()> cb) { m_toolbarDraw = std::move(cb); }
 
 	/**
-	 * @brief Optional File → Open → Resource menu body (drawn live each frame).
-	 * @details When set, File → Open becomes a submenu: File… + Resource → ….
+	 * @brief Optional File to Open to Resource menu body (drawn live each frame).
+	 * @details When set, File to Open becomes a submenu: File... + Resource to ....
 	 */
 	void setOpenResourceMenuDraw(std::function<void()> cb) {
 		m_openResourceMenuDraw = std::move(cb);

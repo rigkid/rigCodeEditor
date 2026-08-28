@@ -4,7 +4,7 @@
 ![preview](examples/codeEditor/img/preview.png)
 
 
-Shared **ImGui code editor** for RigKit tool apps — `*Editor` over [rigComponent](https://github.com/rigkid/rigComponent) `CCode` (same family as rigNodeEditor).
+Shared **ImGui code editor** for RigKit tool apps - `*Editor` over [rigComponent](https://github.com/rigkid/rigComponent) `CCode` (same family as rigNodeEditor).
 
 Every `CCode` entity becomes a Sublime-style tab; edits write back to the component. Apps can also seed the window with `getText` / `setText` (the hero does). Depends on **rigImGui** (`IMui` / `MWindow` / file dialogs / font atlas hooks).
 
@@ -31,7 +31,7 @@ ed->panel().showFind(true);
 
 ## Example
 
-[examples/codeEditor](examples/codeEditor/) — dockable Code Editor with JetBrains Mono and a seeded Python sample.
+[examples/codeEditor](examples/codeEditor/) - dockable Code Editor with JetBrains Mono and a seeded Python sample.
 
 ```bash
 cmake -S examples/codeEditor -B examples/codeEditor/build
@@ -40,7 +40,7 @@ cmake --build examples/codeEditor/build --target codeEditor
 
 ## Pi note
 
-JetBrains embedded Regular (~270KB) + TextEditor are desktop-tool weight — fine for author
+JetBrains embedded Regular (~270KB) + TextEditor are desktop-tool weight - fine for author
 apps. Keep the pack opt-in via `app.json` for lean install binaries.
 
 ## License

@@ -1,9 +1,10 @@
 #include "CodeEditorFonts.h"
 
+#include "imgui.h"
+#include "JetBrainsMono_Regular_ttf.h"
+
 #include <cstdio>
 #include <spdlog/spdlog.h>
-#include "JetBrainsMono_Regular_ttf.h"
-#include "imgui.h"
 
 namespace rigkit {
 

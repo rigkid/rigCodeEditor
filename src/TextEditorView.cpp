@@ -1,8 +1,7 @@
 #include "TextEditorView.h"
 
-#include "imgui_internal.h" // GetTopMostPopupModal
-
 #include <algorithm>
+#include "imgui_internal.h" // GetTopMostPopupModal
 
 namespace rigkit {
 

@@ -1,5 +1,17 @@
 #include "rigCodeEditor.h"
 
+#include "core/IMui.h"
+#include "core/pack/PackRegistry.h"
+#include "core/RigKitEngine.h"
+#include "ecs/MEcs.h"
+#include "CAssetRef.h"
+#include "CCode.h"
+#include "CodeEditorFonts.h"
+#include "CodeEditorWindow.h"
+#include "MWindow.h"
+#include "PropertiesWindow.h"
+#include "TextEditorView.h"
+
 #include <algorithm>
 #include <cstdint>
 #include <imgui.h>
@@ -7,22 +19,11 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
-#include "CodeEditorFonts.h"
-#include "CodeEditorWindow.h"
-#include "TextEditorView.h"
-#include "MWindow.h"
-#include "PropertiesWindow.h"
-#include "core/IMui.h"
-#include "core/RigKitEngine.h"
-#include "core/pack/PackRegistry.h"
-#include "CAssetRef.h"
-#include "CCode.h"
-#include "ecs/MEcs.h"
 
 namespace rigkit {
 namespace {
 
-/** @brief `CCode::language` id → highlighter. Unknown ids stay unhighlighted. */
+/** @brief `CCode::language` id to highlighter. Unknown ids stay unhighlighted. */
 TextEditor::LanguageDefinitionId languageFromId(const std::string& id) {
 	using Lang = TextEditor::LanguageDefinitionId;
 	if (id == "gcode" || id == "nc")
@@ -70,7 +71,7 @@ void rigCodeEditor::setup() {
 	}
 	auto* ui = engine->getUiManager();
 	if (!ui) {
-		spdlog::warn("[rigCodeEditor] no IMui — skip Code Editor (need rigImGui)");
+		spdlog::warn("[rigCodeEditor] no IMui - skip Code Editor (need rigImGui)");
 		return;
 	}
 
@@ -94,7 +95,7 @@ void rigCodeEditor::setup() {
 	wirePropertiesHooks();
 
 	if (!m_opts.registerWindow) {
-		spdlog::info("[rigCodeEditor] registerWindow=false — inline light edit only");
+		spdlog::info("[rigCodeEditor] registerWindow=false - inline light edit only");
 		return;
 	}
 

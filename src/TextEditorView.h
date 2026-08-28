@@ -1,8 +1,8 @@
 #pragma once
 
+#include "imgui.h"
 #include "TextEditor.h"
 #include "TextEditorFindReplace.h"
-#include "imgui.h"
 
 namespace rigkit {
 

@@ -1,12 +1,11 @@
 #include "TextEditorPanel.h"
 
-#include <imgui.h>
-
 #include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <imgui.h>
 #include <iterator>
 #include <system_error>
 
@@ -677,7 +676,7 @@ void TextEditorPanel::drawContents() {
 
 	m_editor.Render("##code", ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows), editorSize);
 
-	// The undo index moves on every edit, undo and redo — cheaper than diffing
+	// The undo index moves on every edit, undo and redo - cheaper than diffing
 	// the buffer, and enough to keep the host's copy authoritative.
 	if (m_sidebarSelected >= 0) {
 		const int undoIndex = m_editor.GetUndoIndex();

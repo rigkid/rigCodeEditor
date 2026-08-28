@@ -1,10 +1,9 @@
 #include "TextEditorFindReplace.h"
 
-#include <imgui.h>
-
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+#include <imgui.h>
 #include <regex>
 
 namespace rigkit {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "TextEditor.h"
-
 namespace rigkit {
 
 /**
