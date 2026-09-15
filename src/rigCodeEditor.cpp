@@ -8,6 +8,7 @@
 #include "CCode.h"
 #include "CodeEditorFonts.h"
 #include "CodeEditorWindow.h"
+#include "Mui.h"
 #include "MWindow.h"
 #include "PropertiesWindow.h"
 #include "TextEditorView.h"
@@ -77,19 +78,21 @@ void rigCodeEditor::setup() {
 
 	// One hook per pack instance; reloadFonts still re-runs registered hooks.
 	if (!m_fontHookRegistered) {
-		ui->registerFontAtlasHook([this](ImFontAtlas& atlas) {
-			m_font = loadCodeEditorFont(atlas, m_opts.fontSize);
-			if (m_window && m_font) {
-				m_window->setEditorFont(m_font);
-			}
-			for (auto& [id, slot] : m_propEditors) {
-				(void)id;
-				if (m_font) {
-					slot.editor.SetFont(m_font);
+		if (auto* mui = dynamic_cast<Mui*>(ui)) {
+			mui->registerFontAtlasHook([this](ImFontAtlas& atlas) {
+				m_font = loadCodeEditorFont(atlas, m_opts.fontSize);
+				if (m_window && m_font) {
+					m_window->setEditorFont(m_font);
 				}
-			}
-		});
-		m_fontHookRegistered = true;
+				for (auto& [id, slot] : m_propEditors) {
+					(void)id;
+					if (m_font) {
+						slot.editor.SetFont(m_font);
+					}
+				}
+			});
+			m_fontHookRegistered = true;
+		}
 	}
 
 	wirePropertiesHooks();

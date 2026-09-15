@@ -13,7 +13,7 @@ Every `CCode` entity becomes a Sublime-style tab; edits write back to the compon
 - **TextEditor** (ImGuiColorTextEdit) + language definitions (including AFDKO `fea` for `CCode::language`)
 - Panel chrome: File / Edit / View menus, find & replace (regex), open-file tabs
 - Mirrors `CCode` buffers (+ optional `CAssetRef` path) and Properties light-edit
-- **JetBrains Mono** Regular via `IMui::registerFontAtlasHook`
+- **JetBrains Mono** Regular via `Mui::registerFontAtlasHook`
 - Host dialogs through `IMui` (`std::vector<std::string>` extension filters)
 
 ## Use
