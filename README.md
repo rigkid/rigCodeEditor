@@ -15,6 +15,8 @@ Every `CCode` entity becomes a Sublime-style tab; edits write back to the compon
 - Mirrors `CCode` buffers (+ optional `CAssetRef` path) and Properties light-edit
 - **JetBrains Mono** Regular via `Mui::registerFontAtlasHook`
 - Host dialogs through `IMui` (`std::vector<std::string>` extension filters)
+- Files dropped on the window open as tabs (directories are refused). The file dialog keeps a drop while it is open
+- CSV / TSV highlighting (delimiters, numbers, quoted fields, alternating columns)
 
 ## Use
 
@@ -23,8 +25,9 @@ rigkit::rigCodeEditor::Options opts;
 opts.windowVisible = true; // false if the app shows the window later
 opts.fontSize = 14.f;
 packs->registerPack(std::make_shared<rigkit::rigCodeEditor>(opts));
-// after setupAll:
-auto ed = ui->getWindowManager()->getWindow<rigkit::CodeEditorWindow>("Code Editor");
+// after setupAll. The window manager lives on Mui, not IMui.
+auto* mui = dynamic_cast<rigkit::Mui*>(engine->getUiManager());
+auto ed = mui->getWindowManager()->getWindow<rigkit::CodeEditorWindow>("Code Editor");
 ed->setText(src, TextEditor::LanguageDefinitionId::Python);
 ed->panel().showFind(true);
 ```

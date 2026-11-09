@@ -51,6 +51,8 @@ TextEditor::LanguageDefinitionId languageFromId(const std::string& id) {
 		return Lang::Markdown;
 	if (id == "fea")
 		return Lang::Fea;
+	if (id == "csv" || id == "tsv")
+		return Lang::Csv;
 	return Lang::None;
 }
 
@@ -59,6 +61,14 @@ TextEditor::LanguageDefinitionId languageFromId(const std::string& id) {
 rigCodeEditor::rigCodeEditor() : rigCodeEditor(Options{}) {}
 
 rigCodeEditor::rigCodeEditor(Options opts) : IPack("rigCodeEditor"), m_opts(opts) {}
+
+rigCodeEditor::~rigCodeEditor() {
+	auto* engine = getEngine();
+	auto* mui = engine ? dynamic_cast<Mui*>(engine->getUiManager()) : nullptr;
+	if (mui) {
+		mui->setUnclaimedFileDropHandler(nullptr);
+	}
+}
 
 bool rigCodeEditor::init() {
 	spdlog::info("[rigCodeEditor] init");
@@ -71,28 +81,27 @@ void rigCodeEditor::setup() {
 		return;
 	}
 	auto* ui = engine->getUiManager();
-	if (!ui) {
+	auto* mui = dynamic_cast<Mui*>(ui);
+	if (!mui) {
 		spdlog::warn("[rigCodeEditor] no IMui - skip Code Editor (need rigImGui)");
 		return;
 	}
 
 	// One hook per pack instance; reloadFonts still re-runs registered hooks.
 	if (!m_fontHookRegistered) {
-		if (auto* mui = dynamic_cast<Mui*>(ui)) {
-			mui->registerFontAtlasHook([this](ImFontAtlas& atlas) {
-				m_font = loadCodeEditorFont(atlas, m_opts.fontSize);
-				if (m_window && m_font) {
-					m_window->setEditorFont(m_font);
+		mui->registerFontAtlasHook([this](ImFontAtlas& atlas) {
+			m_font = loadCodeEditorFont(atlas, m_opts.fontSize);
+			if (m_window && m_font) {
+				m_window->setEditorFont(m_font);
+			}
+			for (auto& [id, slot] : m_propEditors) {
+				(void)id;
+				if (m_font) {
+					slot.editor.SetFont(m_font);
 				}
-				for (auto& [id, slot] : m_propEditors) {
-					(void)id;
-					if (m_font) {
-						slot.editor.SetFont(m_font);
-					}
-				}
-			});
-			m_fontHookRegistered = true;
-		}
+			}
+		});
+		m_fontHookRegistered = true;
 	}
 
 	wirePropertiesHooks();
@@ -102,7 +111,7 @@ void rigCodeEditor::setup() {
 		return;
 	}
 
-	auto* wm = ui->getWindowManager();
+	auto* wm = mui->getWindowManager();
 	if (!wm) {
 		return;
 	}
@@ -136,6 +145,17 @@ void rigCodeEditor::setup() {
 							[this](MEcs& e) { syncCodeBuffers(e); });
 	}
 
+	// File dialogs own the GLFW drop callback and reinstall it every frame.
+	// Unclaimed drops (no dialog open) open here.
+	mui->setUnclaimedFileDropHandler([this](const std::vector<std::string>& paths) {
+		if (!m_window) {
+			return;
+		}
+		for (const auto& path : paths) {
+			m_window->panel().openPath(path);
+		}
+	});
+
 	spdlog::info("[rigCodeEditor] Code Editor window registered (visible={})",
 				 m_opts.windowVisible);
 }
@@ -143,7 +163,8 @@ void rigCodeEditor::setup() {
 void rigCodeEditor::wirePropertiesHooks() {
 	auto* engine = getEngine();
 	auto* ui = engine ? engine->getUiManager() : nullptr;
-	auto* wm = ui ? ui->getWindowManager() : nullptr;
+	auto* mui = dynamic_cast<Mui*>(ui);
+	auto* wm = mui ? mui->getWindowManager() : nullptr;
 	if (!wm) {
 		return;
 	}

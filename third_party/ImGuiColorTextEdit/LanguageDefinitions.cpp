@@ -1303,3 +1303,151 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Fea()
 	}
 	return langDef;
 }
+
+static char CsvSniffDelim(const char* begin, const char* end)
+{
+	int comma = 0;
+	int semi = 0;
+	int tab = 0;
+	bool quoted = false;
+	for (const char* p = begin; p < end; ++p)
+	{
+		if (quoted)
+		{
+			if (*p == '"')
+			{
+				if (p + 1 < end && p[1] == '"')
+					++p;
+				else
+					quoted = false;
+			}
+			continue;
+		}
+		if (*p == '"')
+		{
+			quoted = true;
+			continue;
+		}
+		if (*p == ',')
+			++comma;
+		else if (*p == ';')
+			++semi;
+		else if (*p == '\t')
+			++tab;
+	}
+	if (tab > comma && tab > semi)
+		return '\t';
+	if (semi > comma)
+		return ';';
+	return ',';
+}
+
+static bool CsvIsNumber(const char* begin, const char* end)
+{
+	while (begin < end && (*begin == ' ' || *begin == '\t'))
+		++begin;
+	while (end > begin && (end[-1] == ' ' || end[-1] == '\t' || end[-1] == '\r'))
+		--end;
+	if (begin >= end)
+		return false;
+	if (*begin == '+' || *begin == '-')
+		++begin;
+	bool digit = false;
+	bool dot = false;
+	for (; begin < end; ++begin)
+	{
+		if (*begin >= '0' && *begin <= '9')
+			digit = true;
+		else if (*begin == '.' && !dot)
+			dot = true;
+		else
+			return false;
+	}
+	return digit;
+}
+
+const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Csv()
+{
+	static bool inited = false;
+	static LanguageDefinition langDef;
+	if (!inited)
+	{
+		// One field or one delimiter per call. Column resets when the
+		// colorizer starts a new line (the pointer is not the previous token).
+		langDef.mTokenize = [](const char* in_begin, const char* in_end, const char*& out_begin, const char*& out_end, PaletteIndex& paletteIndex) -> bool
+		{
+			static const char* expected = nullptr;
+			static int column = 0;
+			static char delim = ',';
+			if (in_begin != expected)
+			{
+				column = 0;
+				delim = CsvSniffDelim(in_begin, in_end);
+			}
+			if (in_begin >= in_end)
+				return false;
+
+			if (*in_begin == delim)
+			{
+				out_begin = in_begin;
+				out_end = in_begin + 1;
+				paletteIndex = PaletteIndex::Punctuation;
+				expected = out_end;
+				++column;
+				return true;
+			}
+
+			const char* p = in_begin;
+			const bool quoted = *p == '"';
+			if (quoted)
+			{
+				++p;
+				while (p < in_end)
+				{
+					if (*p == '"')
+					{
+						if (p + 1 < in_end && p[1] == '"')
+						{
+							p += 2;
+							continue;
+						}
+						++p;
+						break;
+					}
+					++p;
+				}
+				while (p < in_end && *p != delim)
+					++p;
+				paletteIndex = PaletteIndex::String;
+			}
+			else
+			{
+				while (p < in_end && *p != delim)
+					++p;
+				if (CsvIsNumber(in_begin, p))
+					paletteIndex = PaletteIndex::Number;
+				else switch (column % 4)
+				{
+				case 0: paletteIndex = PaletteIndex::KnownIdentifier; break;
+				case 1: paletteIndex = PaletteIndex::Identifier; break;
+				case 2: paletteIndex = PaletteIndex::Keyword; break;
+				default: paletteIndex = PaletteIndex::CharLiteral; break;
+				}
+			}
+			if (p == in_begin)
+				return false;
+			out_begin = in_begin;
+			out_end = p;
+			expected = out_end;
+			return true;
+		};
+		langDef.mCommentStart.clear();
+		langDef.mCommentEnd.clear();
+		langDef.mSingleLineComment.clear();
+		langDef.mPreprocChar = '\0';
+		langDef.mCaseSensitive = true;
+		langDef.mName = "CSV";
+		inited = true;
+	}
+	return langDef;
+}

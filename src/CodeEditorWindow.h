@@ -27,6 +27,7 @@ class CodeEditorWindow : public IWindow {
 		m_panel.setText(text, lang);
 	}
 	std::string getText() const { return m_panel.getText(); }
+	const std::string& filePath() const { return m_panel.filePath(); }
 	void setLanguage(TextEditor::LanguageDefinitionId lang) { m_panel.setLanguage(lang); }
 	TextEditor& editor() { return m_panel.editor(); }
 	const TextEditor& editor() const { return m_panel.editor(); }

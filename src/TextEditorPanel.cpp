@@ -61,7 +61,11 @@ void TextEditorPanel::setSidebarEntries(std::vector<SidebarEntry> entries) {
 	m_sidebarEntries = std::move(entries);
 
 	if (activeKey.empty()) {
+		const bool nothingOpen =
+			m_activeOpenFile < 0 && m_pendingOpen < 0 && m_pendingSidebar < 0;
 		m_sidebarSelected = -1;
+		if (nothingOpen && !m_sidebarEntries.empty())
+			m_pendingSidebar = 0;
 		return;
 	}
 
@@ -81,6 +85,14 @@ void TextEditorPanel::setSidebarEntries(std::vector<SidebarEntry> entries) {
 	}
 }
 
+std::string TextEditorPanel::selectedSidebarId() const {
+	if (m_sidebarSelected < 0 || m_sidebarSelected >= (int)m_sidebarEntries.size()) {
+		return {};
+	}
+	const auto& e = m_sidebarEntries[m_sidebarSelected];
+	return e.id.empty() ? e.label : e.id;
+}
+
 bool TextEditorPanel::selectSidebarEntryById(const std::string& id) {
 	if (id.empty()) {
 		return false;
@@ -89,6 +101,8 @@ bool TextEditorPanel::selectSidebarEntryById(const std::string& id) {
 		const auto& e = m_sidebarEntries[i];
 		if ((e.id.empty() ? e.label : e.id) == id) {
 			activateSidebarEntry(i);
+			m_pendingSidebar = i;
+			m_pendingOpen = -1;
 			return true;
 		}
 	}
@@ -98,6 +112,14 @@ bool TextEditorPanel::selectSidebarEntryById(const std::string& id) {
 void TextEditorPanel::activateSidebarEntry(int index) {
 	if (index < 0 || index >= (int)m_sidebarEntries.size())
 		return;
+	if (index == m_sidebarSelected) {
+		// Already showing this entry: reload it from its backing buffer.
+		// A host may have just swapped the buffer text (a live-coding host
+		// pointing its one tab at a different layer, say); flushing the
+		// widget text first would write the stale text over the new text.
+		loadSidebarEntry(index);
+		return;
+	}
 	flushSidebarEntry();
 	stashActiveBuffer();
 	m_activeOpenFile = -1;
@@ -173,39 +195,45 @@ void TextEditorPanel::setHighlightLine(int line) {
 	m_editor.SetViewAtLine(line, TextEditor::SetViewAtLineMode::Centered);
 }
 
-void TextEditorPanel::detectLanguage(const std::string& path) {
+TextEditor::LanguageDefinitionId TextEditorPanel::languageForPath(const std::string& path) const {
 	std::string ext = fs::path(path).extension().string();
 	if (!ext.empty() && ext.front() == '.')
 		ext.erase(0, 1);
 	for (char& c : ext)
 		c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
 
+	using Lang = TextEditor::LanguageDefinitionId;
 	if (ext == "glsl" || ext == "vert" || ext == "frag")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Glsl);
-	else if (ext == "hlsl")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Hlsl);
-	else if (ext == "cpp" || ext == "c" || ext == "h" || ext == "hpp")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Cpp);
-	else if (ext == "cs")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Cs);
-	else if (ext == "lua")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Lua);
-	else if (ext == "py")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Python);
-	else if (ext == "json")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Json);
-	else if (ext == "xml" || ext == "svg")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Xml);
-	else if (ext == "sql")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Sql);
-	else if (ext == "gcode" || ext == "nc" || ext == "cnc" || ext == "tap")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Gcode);
-	else if (ext == "md" || ext == "markdown")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Markdown);
-	else if (ext == "fea")
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::Fea);
-	else
-		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::None);
+		return Lang::Glsl;
+	if (ext == "hlsl")
+		return Lang::Hlsl;
+	if (ext == "cpp" || ext == "c" || ext == "h" || ext == "hpp")
+		return Lang::Cpp;
+	if (ext == "cs")
+		return Lang::Cs;
+	if (ext == "lua")
+		return Lang::Lua;
+	if (ext == "py")
+		return Lang::Python;
+	if (ext == "json")
+		return Lang::Json;
+	if (ext == "xml" || ext == "svg")
+		return Lang::Xml;
+	if (ext == "sql")
+		return Lang::Sql;
+	if (ext == "gcode" || ext == "nc" || ext == "cnc" || ext == "tap")
+		return Lang::Gcode;
+	if (ext == "md" || ext == "markdown")
+		return Lang::Markdown;
+	if (ext == "csv" || ext == "tsv")
+		return Lang::Csv;
+	if (ext == "fea")
+		return Lang::Fea;
+	return Lang::None;
+}
+
+void TextEditorPanel::detectLanguage(const std::string& path) {
+	m_editor.SetLanguageDefinition(languageForPath(path));
 }
 
 bool TextEditorPanel::readFileText(const std::string& path, std::string& outText,
@@ -252,18 +280,35 @@ void TextEditorPanel::stashActiveBuffer() {
 void TextEditorPanel::activateOpenFile(int index) {
 	if (index < 0 || index >= (int)m_openFiles.size())
 		return;
+	// Already showing this file: reload the buffer (a disk reopen) and do not
+	// stash the widget over the text we just stored.
+	if (index == m_activeOpenFile && m_sidebarSelected < 0) {
+		const auto& buf = m_openFiles[index];
+		m_filePath = buf.path;
+		m_editor.SetText(buf.text);
+		m_editor.SetLanguageDefinition(buf.lang);
+		m_lastUndoIndex = m_editor.GetUndoIndex();
+		m_statusMessage.clear();
+		return;
+	}
 	flushSidebarEntry();
-	m_sidebarSelected = -1;
 	stashActiveBuffer();
+	m_sidebarSelected = -1;
 	m_activeOpenFile = index;
 	const auto& buf = m_openFiles[index];
 	m_filePath = buf.path;
 	m_editor.SetText(buf.text);
 	m_editor.SetLanguageDefinition(buf.lang);
+	m_lastUndoIndex = m_editor.GetUndoIndex();
 	m_statusMessage.clear();
 }
 
 void TextEditorPanel::openPath(const std::string& path) {
+	std::error_code ec;
+	if (fs::is_directory(path, ec)) {
+		m_statusMessage = "Not a file: " + path;
+		return;
+	}
 	std::string text, err;
 	if (!readFileText(path, text, err)) {
 		m_statusMessage = err;
@@ -271,33 +316,37 @@ void TextEditorPanel::openPath(const std::string& path) {
 	}
 
 	flushSidebarEntry();
-	m_sidebarSelected = -1;
+	stashActiveBuffer();
 
 	if (m_openFilesSidebar) {
+		const auto lang = languageForPath(path);
 		for (int i = 0; i < (int)m_openFiles.size(); ++i) {
 			if (m_openFiles[i].path == path) {
-				activateOpenFile(i);
-				m_openFiles[i].text = text;
-				m_editor.SetText(text);
-				detectLanguage(path);
-				m_openFiles[i].lang = m_editor.GetLanguageDefinition();
+				m_openFiles[i].text = std::move(text);
+				m_openFiles[i].lang = lang;
+				m_pendingOpen = i;
+				m_pendingSidebar = -1;
+				m_statusMessage.clear();
 				return;
 			}
 		}
-		stashActiveBuffer();
 		OpenBuffer buf;
 		buf.path = path;
-		buf.text = text;
+		buf.text = std::move(text);
+		buf.lang = lang;
 		m_openFiles.push_back(std::move(buf));
-		m_activeOpenFile = (int)m_openFiles.size() - 1;
+		m_pendingOpen = (int)m_openFiles.size() - 1;
+		m_pendingSidebar = -1;
+		m_statusMessage.clear();
+		return;
 	}
 
+	m_sidebarSelected = -1;
+	m_activeOpenFile = -1;
 	m_filePath = path;
 	m_editor.SetText(text);
 	detectLanguage(path);
-	if (m_openFilesSidebar && m_activeOpenFile >= 0 && m_activeOpenFile < (int)m_openFiles.size()) {
-		m_openFiles[m_activeOpenFile].lang = m_editor.GetLanguageDefinition();
-	}
+	m_lastUndoIndex = m_editor.GetUndoIndex();
 	m_statusMessage.clear();
 }
 
@@ -308,6 +357,10 @@ void TextEditorPanel::closeOpenFile(int index) {
 		stashActiveBuffer();
 
 	m_openFiles.erase(m_openFiles.begin() + index);
+	if (m_pendingOpen == index)
+		m_pendingOpen = -1;
+	else if (m_pendingOpen > index)
+		--m_pendingOpen;
 
 	if (m_openFiles.empty()) {
 		m_activeOpenFile = -1;
@@ -330,19 +383,20 @@ void TextEditorPanel::closeOpenFile(int index) {
 
 void TextEditorPanel::newDocument() {
 	flushSidebarEntry();
-	m_sidebarSelected = -1;
-	if (m_openFilesSidebar) {
-		stashActiveBuffer();
-		OpenBuffer buf;
-		buf.path.clear();
-		buf.text.clear();
-		buf.lang = TextEditor::LanguageDefinitionId::None;
-		m_openFiles.push_back(std::move(buf));
-		m_activeOpenFile = (int)m_openFiles.size() - 1;
+	stashActiveBuffer();
+	if (!m_openFilesSidebar) {
+		m_sidebarSelected = -1;
+		m_activeOpenFile = -1;
+		m_editor.SetText("");
+		m_filePath.clear();
+		m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::None);
+		m_lastUndoIndex = m_editor.GetUndoIndex();
+		m_statusMessage.clear();
+		return;
 	}
-	m_editor.SetText("");
-	m_filePath.clear();
-	m_editor.SetLanguageDefinition(TextEditor::LanguageDefinitionId::None);
+	m_openFiles.emplace_back();
+	m_pendingOpen = (int)m_openFiles.size() - 1;
+	m_pendingSidebar = -1;
 	m_statusMessage.clear();
 }
 
@@ -394,17 +448,21 @@ void TextEditorPanel::drawContents() {
 			return {".sql", ".*"};
 		if (lang == TextEditor::LanguageDefinitionId::Markdown)
 			return {".md", ".markdown", ".*"};
+		if (lang == TextEditor::LanguageDefinitionId::Csv)
+			return {".csv", ".tsv", ".*"};
 		if (lang == TextEditor::LanguageDefinitionId::Fea)
 			return {".fea", ".*"};
-		return {".cpp", ".h", ".hpp", ".c", ".py", ".glsl", ".gcode", ".fea", ".json", ".txt", ".*"};
+		return {".cpp",	  ".h",	  ".hpp",  ".c",   ".py", ".glsl",
+				".gcode", ".fea", ".json", ".txt", ".*"};
 	};
 
 	auto doOpen = [&] {
 		if (!m_openFile)
 			return;
 		m_openFile("Open File",
-				   {".cpp", ".h", ".hpp", ".c", ".cs", ".py", ".lua", ".glsl", ".vert", ".frag",
-					".gcode", ".nc", ".fea", ".json", ".xml", ".svg", ".txt", ".md", ".*"},
+				   {".cpp", ".h",        ".hpp", ".c",   ".cs",  ".py",  ".lua", ".glsl", ".vert",
+					".frag", ".gcode", ".nc",  ".fea", ".json", ".xml", ".svg", ".txt",  ".md",
+					".markdown", ".csv", ".tsv", ".*"},
 				   [this](const std::string& path) { openPath(path); });
 	};
 
@@ -523,6 +581,7 @@ void TextEditorPanel::drawContents() {
 					{"HLSL", TextEditor::LanguageDefinitionId::Hlsl},
 					{"G-code", TextEditor::LanguageDefinitionId::Gcode},
 					{"Markdown", TextEditor::LanguageDefinitionId::Markdown},
+					{"CSV", TextEditor::LanguageDefinitionId::Csv},
 					{"FEA", TextEditor::LanguageDefinitionId::Fea},
 				};
 				auto curLang = m_editor.GetLanguageDefinition();
@@ -590,6 +649,7 @@ void TextEditorPanel::drawContents() {
 
 	const bool hasHostEntries = !m_sidebarEntries.empty();
 	const bool hasOpenFiles = m_openFilesSidebar && !m_openFiles.empty();
+	const bool holdSelection = m_pendingSidebar >= 0 || m_pendingOpen >= 0;
 
 	if (hasHostEntries || hasOpenFiles) {
 		const ImGuiTabBarFlags tabFlags =
@@ -603,20 +663,24 @@ void TextEditorPanel::drawContents() {
 					dirty = true;
 					display.resize(display.size() - 2);
 				}
-				const std::string stable =
-					e.id.empty() ? display : e.id;
+				const std::string stable = e.id.empty() ? display : e.id;
 				const std::string tabLabel = display + "###src" + stable;
 
 				ImGuiTabItemFlags itemFlags = 0;
-				if (e.isActive || m_sidebarSelected == i)
+				if (m_pendingSidebar == i)
 					itemFlags |= ImGuiTabItemFlags_SetSelected;
 				if (dirty)
 					itemFlags |= ImGuiTabItemFlags_UnsavedDocument;
 
 				ImGui::PushID(i);
 				if (ImGui::BeginTabItem(tabLabel.c_str(), nullptr, itemFlags)) {
-					if (m_sidebarSelected != i)
+					if (m_pendingSidebar == i) {
+						if (m_sidebarSelected != i)
+							activateSidebarEntry(i);
+						m_pendingSidebar = -1;
+					} else if (!holdSelection && m_sidebarSelected != i) {
 						activateSidebarEntry(i);
+					}
 					ImGui::EndTabItem();
 				}
 				if (!e.path.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip))
@@ -642,14 +706,19 @@ void TextEditorPanel::drawContents() {
 					const std::string tabLabel = display + "###open" + std::to_string(i);
 
 					ImGuiTabItemFlags itemFlags = 0;
-					if (m_activeOpenFile == i)
+					if (m_pendingOpen == i)
 						itemFlags |= ImGuiTabItemFlags_SetSelected;
 
 					bool open = true;
 					ImGui::PushID(1000 + i);
 					if (ImGui::BeginTabItem(tabLabel.c_str(), &open, itemFlags)) {
-						if (m_activeOpenFile != i)
+						if (m_pendingOpen == i) {
 							activateOpenFile(i);
+							m_pendingOpen = -1;
+						} else if (!holdSelection &&
+								   (m_activeOpenFile != i || m_sidebarSelected >= 0)) {
+							activateOpenFile(i);
+						}
 						ImGui::EndTabItem();
 					}
 					if (!open)
@@ -678,11 +747,17 @@ void TextEditorPanel::drawContents() {
 
 	// The undo index moves on every edit, undo and redo - cheaper than diffing
 	// the buffer, and enough to keep the host's copy authoritative.
-	if (m_sidebarSelected >= 0) {
-		const int undoIndex = m_editor.GetUndoIndex();
-		if (undoIndex != m_lastUndoIndex) {
-			m_lastUndoIndex = undoIndex;
+	// Only the tab that is actually showing receives the text.
+	const int undoIndex = m_editor.GetUndoIndex();
+	if (undoIndex != m_lastUndoIndex) {
+		m_lastUndoIndex = undoIndex;
+		if (m_sidebarSelected >= 0) {
 			flushSidebarEntry();
+		} else if (m_activeOpenFile >= 0 && m_activeOpenFile < (int)m_openFiles.size()) {
+			auto& buf = m_openFiles[m_activeOpenFile];
+			buf.text = m_editor.GetText();
+			buf.path = m_filePath;
+			buf.lang = m_editor.GetLanguageDefinition();
 		}
 	}
 

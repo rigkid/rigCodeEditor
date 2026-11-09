@@ -4,6 +4,7 @@
 #include "core/RigKitEngine.h"
 #include "packs/rigCodeEditor/src/rigCodeEditor.h"
 #include "packs/rigComponent/src/rigComponent.h"
+#include "packs/rigImGui/src/Mui.h"
 #include "packs/rigImGui/src/rigImGui.h"
 #include "packs/rigSystems/src/rigSystems.h"
 #include "CodeEditorWindow.h"
@@ -49,11 +50,11 @@ void CodeEditorApp::setup() {
 	packs->initAll();
 	packs->setupAll();
 
-	auto* ui = m_engine->getUiManager();
-	if (!ui || !ui->getWindowManager()) {
+	auto* mui = dynamic_cast<rigkit::Mui*>(m_engine->getUiManager());
+	if (!mui || !mui->getWindowManager()) {
 		return;
 	}
-	auto ed = ui->getWindowManager()->getWindow<rigkit::CodeEditorWindow>("Code Editor");
+	auto ed = mui->getWindowManager()->getWindow<rigkit::CodeEditorWindow>("Code Editor");
 	if (ed) {
 		ed->setText(kSamplePython, TextEditor::LanguageDefinitionId::Python);
 	}

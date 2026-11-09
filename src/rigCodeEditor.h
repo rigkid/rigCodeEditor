@@ -18,7 +18,8 @@ class MEcs;
  * @brief Shared ImGui code-editor pack for tool apps.
  * @details Registers a Code Editor window via IMui / MWindow. Mirrors every
  * `CCode` entity into tabs (edits write back); apps may also seed the window
- * with getText / setText. Vendors ImGuiColorTextEdit under third_party/.
+ * with getText / setText. Files dropped on the window open as tabs.
+ * Vendors ImGuiColorTextEdit under third_party/.
  */
 class rigCodeEditor : public IPack {
   public:
@@ -31,6 +32,7 @@ class rigCodeEditor : public IPack {
 
 	rigCodeEditor();
 	explicit rigCodeEditor(Options opts);
+	~rigCodeEditor() override;
 
 	bool init() override;
 	void setup() override;

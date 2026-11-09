@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
-#include "imgui.h"
 #include "TextEditor.h"
 #include "TextEditorFindReplace.h"
+#include "imgui.h"
 
 namespace rigkit {
 
@@ -67,14 +67,35 @@ class TextEditorPanel {
 	};
 	void setSidebarEntries(std::vector<SidebarEntry> entries);
 
-	/** @brief Activate the host tab whose `id` matches (no-op if missing). */
+	/**
+	 * @brief Activate the host tab whose `id` matches (no-op if missing).
+	 * @details Re-selecting the tab already shown reloads it from its
+	 * backing buffer, so a host that just swapped the buffer text (and
+	 * bumped `revision`) can call this to make the editor follow.
+	 */
 	bool selectSidebarEntryById(const std::string& id);
+
+	/**
+	 * @brief Id of the host tab currently shown.
+	 * @return The entry `id` (or its label when it has no id). Empty when a
+	 * disk-opened file is active or no host tab is selected - hosts that mirror
+	 * the editor selection (a live preview, say) should leave their own
+	 * selection alone while this is empty.
+	 */
+	std::string selectedSidebarId() const;
 
 	/** @brief Show disk-opened buffers as closable tabs (default on). */
 	void setOpenFilesSidebarEnabled(bool enabled) { m_openFilesSidebar = enabled; }
 	bool isOpenFilesSidebarEnabled() const { return m_openFilesSidebar; }
 
 	const std::string& filePath() const { return m_filePath; }
+
+	/**
+	 * @brief Open a disk path as its own tab.
+	 * @details Reloads when that path is already open. Directories are refused.
+	 * Does not create a `CCode` entity.
+	 */
+	void openPath(const std::string& path);
 
 	void setHighlightLine(int line);
 	void setCursorLine(int line);
@@ -116,6 +137,7 @@ class TextEditorPanel {
 		TextEditor::LanguageDefinitionId lang = TextEditor::LanguageDefinitionId::None;
 	};
 
+	TextEditor::LanguageDefinitionId languageForPath(const std::string& path) const;
 	void detectLanguage(const std::string& path);
 	bool readFileText(const std::string& path, std::string& outText, std::string& err) const;
 	void stashActiveBuffer();
@@ -124,7 +146,6 @@ class TextEditorPanel {
 	/** @brief Push editor text back into the active host buffer. */
 	void flushSidebarEntry();
 	void activateOpenFile(int index);
-	void openPath(const std::string& path);
 	void closeOpenFile(int index);
 	void newDocument();
 	void renameActivePath(const std::string& path);
@@ -150,6 +171,10 @@ class TextEditorPanel {
 	bool m_openFilesSidebar = true;
 	std::vector<OpenBuffer> m_openFiles;
 	int m_activeOpenFile = -1;
+	// One-shot tab to show. SetSelected every frame snaps the click back and
+	// stashes this buffer's text into the other file.
+	int m_pendingSidebar = -1;
+	int m_pendingOpen = -1;
 
 	int m_highlightLine = -1;
 	bool m_syncPlaybackFromCursor = false;
