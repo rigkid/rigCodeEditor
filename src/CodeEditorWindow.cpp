@@ -5,7 +5,7 @@
 namespace rigkit {
 
 CodeEditorWindow::CodeEditorWindow(const std::string& title)
-	: IWindow(title, ImGuiWindowFlags_MenuBar) {
+	: ImGuiPanel(title, ImGuiWindowFlags_MenuBar) {
 	setCategory("Edit");
 	m_panel.setup();
 }
@@ -16,7 +16,7 @@ void CodeEditorWindow::render() {
 		ImGui::SetNextWindowPos(ImVec2(20.f, 44.f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(1040.f, 640.f), ImGuiCond_FirstUseEver);
 	}
-	IWindow::render();
+	ImGuiPanel::render();
 }
 
 void CodeEditorWindow::renderContents() {

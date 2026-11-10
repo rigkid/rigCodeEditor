@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "IWindow.h"
+#include "ImGuiPanel.h"
 #include "TextEditorPanel.h"
 
 namespace rigkit {
@@ -12,7 +12,7 @@ namespace rigkit {
  * @details Begun with ImGuiWindowFlags_MenuBar; panel owns File/Edit/View,
  * find/replace, open-file tabs, and IMui dialog callbacks.
  */
-class CodeEditorWindow : public IWindow {
+class CodeEditorWindow : public ImGuiPanel {
   public:
 	explicit CodeEditorWindow(const std::string& title = "Code Editor");
 
